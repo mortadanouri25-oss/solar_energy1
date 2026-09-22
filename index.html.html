@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Solar PV & Energy Storage Sizing Suite</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #f59e0b;
+      --accent-blue: #38bdf8;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border: #334155;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: var(--accent);
+    }
+
+    header p {
+      margin: 4px 0 0;
+      color: var(--text-sub);
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background-color: var(--accent-blue);
+      color: #000;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button.secondary {
+      background-color: var(--accent);
+    }
+
+    button.print-btn {
+      background-color: #10b981;
+      color: #fff;
+    }
+
+    button.lang-btn {
+      background-color: #6366f1;
+      color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 950px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.05rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      color: var(--accent-blue);
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+    }
+
+    .tooltip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      background-color: var(--border);
+      color: var(--accent-blue);
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: help;
+      position: relative;
+    }
+
+    .tooltip-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      right: 50%;
+      transform: translateX(50%);
+      background-color: #020617;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 100;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      box-sizing: border-box;
+    }
+
+    .form-group input.invalid {
+      border-color: var(--danger) !important;
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    .error-text {
+      color: var(--danger);
+      font-size: 0.75rem;
+      margin-top: 3px;
+      display: none;
+      font-weight: bold;
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background-color: var(--bg-color);
+      padding: 12px;
+      border-radius: 6px;
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    [dir="rtl"] .metric-card {
+      border-left: none;
+      border-right: 4px solid var(--accent-blue);
+    }
+
+    .metric-card.danger { 
+      border-left-color: var(--danger); 
+      border-right-color: var(--danger); 
+    }
+    .metric-card.success { 
+      border-left-color: var(--success); 
+      border-right-color: var(--success); 
+    }
+
+    .metric-title {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 280px;
+      width: 100%;
+    }
+
+    .status-box {
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .status-box.ok {
+      background-color: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+
+    .status-box.error {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      min-width: 500px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: var(--bg-color);
+      color: var(--accent-blue);
+    }
+
+    /* Print Formatting */
+    @media print {
+      body {
+        background-color: #fff !important;
+        color: #000 !important;
+        padding: 0;
+      }
+
+      .action-btns, .tooltip-icon {
+        display: none !important;
+      }
+
+      .grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      .card, .metric-card {
+        background-color: #fff !important;
+        border: 1px solid #ccc !important;
+        color: #000 !important;
+      }
+
+      input, select {
+        background-color: #fff !important;
+        color: #000 !important;
+        border: none !important;
+        padding: 2px !important;
+        font-weight: bold;
+      }
+
+      .status-box {
+        border: 2px solid #000 !important;
+      }
+
+      th {
+        background-color: #f1f5f9 !important;
+        color: #000 !important;
+      }
+
+      td {
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1 id="appTitle">حزمة تحليل وتصميم المنظومات الشمسية وخزن الطاقة</h1>
+        <p id="appSubtitle">حسابات التأثير الحراري الفصلي، توافقية العاكس، وحجم بنك البطاريات (IEC 62548)</p>
+      </div>
+      <div class="action-btns">
+        <button class="lang-btn" onclick="toggleLanguage()" id="btnLang">English</button>
+        <button class="print-btn" onclick="window.print()" id="btnPrint">طباعة / تصدير PDF</button>
+        <button onclick="saveToLocalStorage()" id="btnSave">حفظ المشروع</button>
+        <button class="secondary" onclick="exportJSON()" id="btnExport">تصدير البيانات</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Input Column -->
+      <div>
+        <!-- 1. PV Panels -->
+        <div class="card">
+          <h2 id="sec1Title">1. مواصفات الألواح الشمسية (STC)</h2>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblPmp">قدرة اللوح P_mp (Wp)</span>
+                <span class="tooltip-icon" data-tooltip="مكتوبة خلف اللوح بالواط">?</span>
+              </label>
+              <input type="text" id="pmp" value="550" oninput="calculate()">
+              <div class="error-text" id="err_pmp">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblVoc">جهد الدائرة Voc (V)</span>
+                <span class="tooltip-icon" data-tooltip="أعلى فولتية للوح عند عدم التوصيل">?</span>
+              </label>
+              <input type="text" id="voc" value="49.8" oninput="calculate()">
+              <div class="error-text" id="err_voc">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblIsc">تيار القصر Isc (A)</span>
+                <span class="tooltip-icon" data-tooltip="أعلى أمبيرية يخرجها اللوح">?</span>
+              </label>
+              <input type="text" id="isc" value="13.9" oninput="calculate()">
+              <div class="error-text" id="err_isc">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblCoeff">معامل الحرارة (%/°C)</span>
+                <span class="tooltip-icon" data-tooltip="مُعامل تغيّر الجهد الحراري بكتالوج اللوح">?</span>
+              </label>
+              <input type="text" id="coeffVoc" value="-0.27" oninput="calculate()">
+              <div class="error-text" id="err_coeffVoc">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblSeries">الألواح على التوالي</span>
+                <span class="tooltip-icon" data-tooltip="عدد الألواح المربوطة بسلسلة واحدة">?</span>
+              </label>
+              <input type="text" id="nSeries" value="16" oninput="calculate()">
+              <div class="error-text" id="err_nSeries">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblParallel">السلاسل على التوازي</span>
+                <span class="tooltip-icon" data-tooltip="عدد الخطوط المربوطة بالتوازي">?</span>
+              </label>
+              <input type="text" id="nParallel" value="2" oninput="calculate()">
+              <div class="error-text" id="err_nParallel">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Inverter -->
+        <div class="card">
+          <h2 id="sec2Title">2. مواصفات الانفرتر (العاكس)</h2>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblInvVmax">أقصى جهد مستمر (V)</span>
+                <span class="tooltip-icon" data-tooltip="حد الجهد الأقصى المسموح بالعاكس">?</span>
+              </label>
+              <input type="text" id="invVmax" value="1000" oninput="calculate()">
+              <div class="error-text" id="err_invVmax">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblInvImax">أقصى تيار مدخل (A)</span>
+                <span class="tooltip-icon" data-tooltip="حد الأمبيرية المسموح لمدخل العاكس">?</span>
+              </label>
+              <input type="text" id="invImax" value="26" oninput="calculate()">
+              <div class="error-text" id="err_invImax">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblMpptMin">أدنى جهد MPPT (V)</span>
+                <span class="tooltip-icon" data-tooltip="أقل جهد ليبدأ الانفرتر بالعمل بكفاءة">?</span>
+              </label>
+              <input type="text" id="mpptMin" value="200" oninput="calculate()">
+              <div class="error-text" id="err_mpptMin">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblMpptMax">أقصى جهد MPPT (V)</span>
+                <span class="tooltip-icon" data-tooltip="أعلى جهد لنطاق تتبع القدرة">?</span>
+              </label>
+              <input type="text" id="mpptMax" value="850" oninput="calculate()">
+              <div class="error-text" id="err_mpptMax">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Four Seasons Temperatures -->
+        <div class="card">
+          <h2 id="sec3Title">3. درجات حرارة الفصول الأربعة (°C)</h2>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblWinter">الشتاء (الأبرد)</span>
+                <span class="tooltip-icon" data-tooltip="أدنى درجة حرارة متوقعة شتاءً">?</span>
+              </label>
+              <input type="text" id="tWinter" value="0" oninput="calculate()">
+              <div class="error-text" id="err_tWinter">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblSpring">الربيع (معتدل)</span>
+                <span class="tooltip-icon" data-tooltip="حرارة الربيع المعتدلة">?</span>
+              </label>
+              <input type="text" id="tSpring" value="22" oninput="calculate()">
+              <div class="error-text" id="err_tSpring">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblSummer">الصيف (الأشد حراً)</span>
+                <span class="tooltip-icon" data-tooltip="أعلى درجة حرارة متوقعة صيفاً">?</span>
+              </label>
+              <input type="text" id="tSummer" value="50" oninput="calculate()">
+              <div class="error-text" id="err_tSummer">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblAutumn">الخريف (معتدل)</span>
+                <span class="tooltip-icon" data-tooltip="حرارة الخريف المعتدلة">?</span>
+              </label>
+              <input type="text" id="tAutumn" value="25" oninput="calculate()">
+              <div class="error-text" id="err_tAutumn">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Battery Bank -->
+        <div class="card">
+          <h2 id="sec4Title">4. بنك خزن الطاقة (البطاريات)</h2>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblBatType">نوع البطارية</span>
+                <span class="tooltip-icon" data-tooltip="عمق التفريغ المسموح لمنع التلف">?</span>
+              </label>
+              <select id="batType" onchange="calculate()">
+                <option value="0.8">LiFePO4 (80% DoD)</option>
+                <option value="0.5">Lead-Acid / GEL (50% DoD)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblBusV">جهد النظام Bus (V)</span>
+                <span class="tooltip-icon" data-tooltip="الفولتية العامة للمنظومة (12/24/48V)">?</span>
+              </label>
+              <input type="text" id="batBusV" value="48" oninput="calculate()">
+              <div class="error-text" id="err_batBusV">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+          <div class="grid-2col">
+            <div class="form-group">
+              <label>
+                <span id="lblUnitV">جهد البطارية (V)</span>
+                <span class="tooltip-icon" data-tooltip="فولتية البطارية الواحدة">?</span>
+              </label>
+              <input type="text" id="unitV" value="12" oninput="calculate()">
+              <div class="error-text" id="err_unitV">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+            <div class="form-group">
+              <label>
+                <span id="lblUnitAh">سعة البطارية (Ah)</span>
+                <span class="tooltip-icon" data-tooltip="أمبيرية البطارية الواحدة">?</span>
+              </label>
+              <input type="text" id="unitAh" value="100" oninput="calculate()">
+              <div class="error-text" id="err_unitAh">لا تتركها فارغة ولا تكتب صفراً</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>
+              <span id="lblReqAh">السعة المطلوبة (Ah)</span>
+              <span class="tooltip-icon" data-tooltip="الاستهلاك الليلي المطلوب لتغطيته">?</span>
+            </label>
+            <input type="text" id="reqAh" value="200" oninput="calculate()">
+            <div class="error-text" id="err_reqAh">لا تتركها فارغة ولا تكتب صفراً</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Column -->
+      <div>
+        <div id="statusBox" class="status-box ok">تم فحص وتأكيد سلامة إعدادات التصميم</div>
+
+        <!-- Primary Overview Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-title" id="mTitlePower">قدرة الألواح الكلية</div>
+            <div class="metric-value" id="valPower">0 kWp</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title" id="mTitleIsc">التيار الإجمالي Isc</div>
+            <div class="metric-value" id="valIsc">0 A</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title" id="mTitleGrossEnergy">طاقة البطاريات الكلية</div>
+            <div class="metric-value" id="valBatEnergy">0 kWh</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title" id="mTitleNetEnergy">الطاقة الفعالة الصافية</div>
+            <div class="metric-value" id="valUsableEnergy">0 kWh</div>
+          </div>
+        </div>
+
+        <!-- Secondary Overview Cards -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-title" id="mTitleArea">المساحة المطلوبة التقديرية</div>
+            <div class="metric-value" id="valArea">0 m²</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title" id="mTitleBatCount">عدد البطاريات المطلوب</div>
+            <div class="metric-value" id="valBatCount">0 Units</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title" id="mTitleBatConfig">طريقة توصيل البطاريات</div>
+            <div class="metric-value" id="valBatConfig">0S x 0P</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title" id="mTitleIscStatus">فحص تيار الانفرتر</div>
+            <div class="metric-value" id="valIscStatus">OK</div>
+          </div>
+        </div>
+
+        <!-- Detailed Impact Table -->
+        <div class="card">
+          <h2 id="table1Title">ملخص تأثير الألواح، العاكس، وبنك البطاريات</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th id="thComp">المكون / العنصر</th>
+                  <th id="thCalc">النتيجة المحسوبة</th>
+                  <th id="thLimit">الحد المسموح / الهدف</th>
+                  <th id="thImpact">الحالة والتأثير الميداني</th>
+                </tr>
+              </thead>
+              <tbody id="detailedImpactTable">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Seasonal Table -->
+        <div class="card">
+          <h2 id="table2Title">تغيرات الفولتية الفصلية وحالة أمان الانفرتر</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th id="thSeason">الفصل</th>
+                  <th id="thTemp">الحرارة (°C)</th>
+                  <th id="thVoc">الفولتية المتوقعة Voc (V)</th>
+                  <th id="thSafety">حالة أمان العاكس</th>
+                </tr>
+              </thead>
+              <tbody id="seasonalTable">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card">
+          <h2 id="chartTitle">الرسم البياني: الفولتية الفصلية مقارنة بحد العاكس الأقصى</h2>
+          <div class="chart-container">
+            <canvas id="seasonalChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let chartInstance = null;
+    let currentLang = 'ar';
+
+    const inputsToValidate = [
+      'pmp', 'voc', 'isc', 'coeffVoc', 'nSeries', 'nParallel',
+      'invVmax', 'invImax', 'mpptMin', 'mpptMax',
+      'tWinter', 'tSpring', 'tSummer', 'tAutumn',
+      'batBusV', 'unitV', 'unitAh', 'reqAh'
+    ];
+
+    function parseInput(val) {
+      if (val === null || val === undefined) return NaN;
+      let str = String(val).trim();
+      if (str === '') return NaN;
+      str = str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+      const parsed = parseFloat(str);
+      return parsed;
+    }
+
+    function validateFields() {
+      let isValid = true;
+      inputsToValidate.forEach(id => {
+        const inputEl = document.getElementById(id);
+        const errEl = document.getElementById(`err_${id}`);
+        const val = parseInput(inputEl.value);
+
+        if (isNaN(val) || val === 0) {
+          isValid = false;
+          inputEl.classList.add('invalid');
+          if (errEl) errEl.style.display = 'block';
+        } else {
+          inputEl.classList.remove('invalid');
+          if (errEl) errEl.style.display = 'none';
+        }
+      });
+      return isValid;
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('seasonalChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: currentLang === 'ar' ? ['الشتاء', 'الربيع', 'الصيف', 'الخريف'] : ['Winter', 'Spring', 'Summer', 'Autumn'],
+          datasets: [
+            { label: currentLang === 'ar' ? 'فولتية السلسلة Voc (V)' : 'String Voc (V)', data: [0, 0, 0, 0], backgroundColor: '#38bdf8' },
+            { label: currentLang === 'ar' ? 'أقصى فولتية للانفرتر DC (V)' : 'Inverter Max V DC (V)', data: [0, 0, 0, 0], type: 'line', borderColor: '#ef4444', borderWidth: 2, fill: false }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+          },
+          plugins: { legend: { labels: { color: '#f8fafc' } } }
+        }
+      });
+    }
+
+    function calculate() {
+      const isInputsValid = validateFields();
+      const statusBox = document.getElementById('statusBox');
+
+      if (!isInputsValid) {
+        statusBox.className = 'status-box error';
+        statusBox.innerText = currentLang === 'ar' 
+          ? 'خطأ في المدخلات: يرجى تصحيح الخانات (لا تتركها فارغة ولا تكتب صفراً)' 
+          : 'Input Error: Please correct highlighted fields (Do not leave empty or zero)';
+        return;
+      }
+
+      // 1. PV Inputs
+      const pmp = parseInput(document.getElementById('pmp').value);
+      const voc = parseInput(document.getElementById('voc').value);
+      const isc = parseInput(document.getElementById('isc').value);
+      const coeffVoc = parseInput(document.getElementById('coeffVoc').value);
+      const nSeries = parseInput(document.getElementById('nSeries').value);
+      const nParallel = parseInput(document.getElementById('nParallel').value);
+
+      // 2. Inverter Inputs
+      const invVmax = parseInput(document.getElementById('invVmax').value);
+      const invImax = parseInput(document.getElementById('invImax').value);
+      const mpptMin = parseInput(document.getElementById('mpptMin').value);
+      const mpptMax = parseInput(document.getElementById('mpptMax').value);
+
+      // 3. Seasons Inputs
+      const seasons = [
+        { name: currentLang === 'ar' ? 'الشتاء' : 'Winter', temp: parseInput(document.getElementById('tWinter').value) },
+        { name: currentLang === 'ar' ? 'الربيع' : 'Spring', temp: parseInput(document.getElementById('tSpring').value) },
+        { name: currentLang === 'ar' ? 'الصيف' : 'Summer', temp: parseInput(document.getElementById('tSummer').value) },
+        { name: currentLang === 'ar' ? 'الخريف' : 'Autumn', temp: parseInput(document.getElementById('tAutumn').value) }
+      ];
+
+      // 4. Battery Inputs
+      const dod = parseInput(document.getElementById('batType').value);
+      const batBusV = parseInput(document.getElementById('batBusV').value);
+      const unitV = parseInput(document.getElementById('unitV').value);
+      const unitAh = parseInput(document.getElementById('unitAh').value);
+      const reqAh = parseInput(document.getElementById('reqAh').value);
+
+      // PV Array Calculations
+      const stcVocString = voc * nSeries;
+      const totalIsc = isc * nParallel;
+      const totalPanels = nSeries * nParallel;
+      const totalPowerKW = (pmp * totalPanels) / 1000;
+      const approxArea = totalPanels * 2.6;
+
+      document.getElementById('valPower').innerText = `${totalPowerKW.toFixed(2)} kWp`;
+      document.getElementById('valIsc').innerText = `${totalIsc.toFixed(1)} A`;
+      document.getElementById('valArea').innerText = `${approxArea.toFixed(1)} m²`;
+
+      // Battery Bank Calculations
+      const grossAh = reqAh / dod;
+      const grossEnergyKWh = (grossAh * batBusV) / 1000;
+      const netUsableKWh = grossEnergyKWh * dod;
+
+      const batSeries = unitV > 0 ? Math.ceil(batBusV / unitV) : 1;
+      const batParallel = unitAh > 0 ? Math.ceil(grossAh / unitAh) : 1;
+      const totalBatteries = batSeries * batParallel;
+
+      document.getElementById('valBatEnergy').innerText = `${grossEnergyKWh.toFixed(2)} kWh`;
+      document.getElementById('valUsableEnergy').innerText = `${netUsableKWh.toFixed(2)} kWh`;
+      document.getElementById('valBatCount').innerText = `${totalBatteries} ${currentLang === 'ar' ? 'بطارية' : 'Units'}`;
+      document.getElementById('valBatConfig').innerText = `${batSeries}S x ${batParallel}P`;
+
+      // Checks
+      let errors = [];
+      const isCurrentOk = totalIsc <= invImax;
+      document.getElementById('valIscStatus').innerText = isCurrentOk ? (currentLang === 'ar' ? 'آمن' : 'SAFE') : (currentLang === 'ar' ? 'تيار مرتفع' : 'OVERCURRENT');
+      if (!isCurrentOk) {
+        errors.push(currentLang === 'ar' 
+          ? `تيار الألواح الكلي (${totalIsc.toFixed(1)}A) يتجاوز حد العاكس الأقصى (${invImax}A)!` 
+          : `Array Isc (${totalIsc.toFixed(1)}A) exceeds Inverter Max Input Current (${invImax}A)!`);
+      }
+
+      // Detailed Impact Table
+      let impactHtml = `
+        <tr>
+          <td>${currentLang === 'ar' ? 'سعة الألواح الإجمالية' : 'PV Array Total Capacity'}</td>
+          <td>${totalPowerKW.toFixed(2)} kWp (${totalPanels} ${currentLang === 'ar' ? 'لوح' : 'Panels'})</td>
+          <td>${currentLang === 'ar' ? 'حجم المنظومة' : 'System Sizing'}</td>
+          <td><span style="color:var(--success)">${currentLang === 'ar' ? 'ممتاز' : 'OPTIMAL'}</span> (${approxArea.toFixed(1)} m² ${currentLang === 'ar' ? 'مساحة سقف متوقعة' : 'Roof Space Needed'})</td>
+        </tr>
+        <tr>
+          <td>${currentLang === 'ar' ? 'تيار الألواح الإجمالي (Isc)' : 'PV Array Current (Isc)'}</td>
+          <td>${totalIsc.toFixed(1)} A</td>
+          <td>${currentLang === 'ar' ? 'حد العاكس' : 'Max'} ${invImax} A</td>
+          <td>${isCurrentOk ? `<span style="color:var(--success)">${currentLang === 'ar' ? 'ناجح (آمن لمدخل العاكس)' : 'PASSED (Safe for Inverter)'}</span>` : `<span style="color:var(--danger)">${currentLang === 'ar' ? 'فاشل (خطورة ارتفاع الحرارة)' : 'FAILED (Risk of Overheating)'}</span>`}</td>
+        </tr>
+        <tr>
+          <td>${currentLang === 'ar' ? 'سعة بنك البطاريات' : 'Battery Energy Bank'}</td>
+          <td>${currentLang === 'ar' ? 'الكلي' : 'Gross'} ${grossEnergyKWh.toFixed(2)} kWh (${currentLang === 'ar' ? 'الصافي' : 'Net'} ${netUsableKWh.toFixed(2)} kWh)</td>
+          <td>${currentLang === 'ar' ? 'عمق التفريغ' : 'DoD'} ${(dod * 100).toFixed(0)}%</td>
+          <td><span style="color:var(--success)">${currentLang === 'ar' ? 'محدد لسعة' : 'Sized for'} ${reqAh} Ah</span></td>
+        </tr>
+        <tr>
+          <td>${currentLang === 'ar' ? 'طريقة ربط البطاريات' : 'Battery Configuration'}</td>
+          <td>${totalBatteries} ${currentLang === 'ar' ? 'بطارية' : 'Batteries'} (${batSeries} ${currentLang === 'ar' ? 'توالي' : 'Series'} x ${batParallel} ${currentLang === 'ar' ? 'توازي' : 'Parallel'})</td>
+          <td>${currentLang === 'ar' ? 'فولتية النظام' : 'Bus Voltage'} ${batBusV} V</td>
+          <td><span style="color:var(--accent-blue)">${currentLang === 'ar' ? 'مطابق لفولتية النظام' : 'Matched to System Bus'}</span></td>
+        </tr>
+      `;
+      document.getElementById('detailedImpactTable').innerHTML = impactHtml;
+
+      // Seasonal Calculations & Table
+      let chartData = [];
+      let tableHtml = '';
+
+      seasons.forEach(s => {
+        const deltaT = s.temp - 25;
+        const vCorrected = stcVocString * (1 + (coeffVoc / 100) * deltaT);
+        chartData.push(vCorrected.toFixed(1));
+
+        let statusText = `<span style="color:var(--success)">${currentLang === 'ar' ? 'آمن' : 'SAFE'}</span>`;
+        if (vCorrected > invVmax) {
+          statusText = `<span style="color:var(--danger)">${currentLang === 'ar' ? 'جهد مرتفع خطير' : 'OVERVOLTAGE'}</span>`;
+          errors.push(currentLang === 'ar' 
+            ? `جهد ${s.name} (${vCorrected.toFixed(1)}V) يتجاوز حد العاكس الأقصى (${invVmax}V)!` 
+            : `${s.name} Voc (${vCorrected.toFixed(1)}V) exceeds Inverter Max DC (${invVmax}V)!`);
+        } else if (vCorrected < mpptMin) {
+          statusText = `<span style="color:var(--accent)">${currentLang === 'ar' ? 'أقل من نطاق MPPT' : 'UNDER MPPT'}</span>`;
+        }
+
+        tableHtml += `<tr>
+          <td>${s.name}</td>
+          <td>${s.temp} °C</td>
+          <td>${vCorrected.toFixed(1)} V</td>
+          <td>${statusText}</td>
+        </tr>`;
+      });
+
+      document.getElementById('seasonalTable').innerHTML = tableHtml;
+
+      // Status UI
+      if (errors.length > 0) {
+        statusBox.className = 'status-box error';
+        statusBox.innerHTML = errors.join('<br>');
+      } else {
+        statusBox.className = 'status-box ok';
+        statusBox.innerText = currentLang === 'ar' 
+          ? 'تم التحقق من سلامة التصميم (الألواح، الانفرتر والبطاريات متوافقة تماماً)' 
+          : 'System Configuration Fully Validated (PV, Inverter & Storage Compatible)';
+      }
+
+      // Chart Update
+      if (chartInstance) {
+        chartInstance.data.labels = currentLang === 'ar' ? ['الشتاء', 'الربيع', 'الصيف', 'الخريف'] : ['Winter', 'Spring', 'Summer', 'Autumn'];
+        chartInstance.data.datasets[0].label = currentLang === 'ar' ? 'فولتية السلسلة Voc (V)' : 'String Voc (V)';
+        chartInstance.data.datasets[0].data = chartData;
+        chartInstance.data.datasets[1].label = currentLang === 'ar' ? 'أقصى فولتية للانفرتر DC (V)' : 'Inverter Max V DC (V)';
+        chartInstance.data.datasets[1].data = [invVmax, invVmax, invVmax, invVmax];
+        chartInstance.update();
+      }
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'ar' ? 'en' : 'ar';
+      document.documentElement.lang = currentLang;
+      document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+
+      document.getElementById('btnLang').innerText = currentLang === 'ar' ? 'English' : 'العربية';
+      document.getElementById('appTitle').innerText = currentLang === 'ar' ? 'حزمة تحليل وتصميم المنظومات الشمسية وخزن الطاقة' : 'Solar PV & Energy Storage Sizing Suite';
+      document.getElementById('appSubtitle').innerText = currentLang === 'ar' ? 'حسابات التأثير الحراري الفصلي، توافقية العاكس، وحجم بنك البطاريات (IEC 62548)' : 'Full Seasonal Thermal Calculation, Inverter Compatibility & Storage Sizing';
+      document.getElementById('btnPrint').innerText = currentLang === 'ar' ? 'طباعة / تصدير PDF' : 'Print / Export PDF';
+      document.getElementById('btnSave').innerText = currentLang === 'ar' ? 'حفظ المشروع' : 'Save Project';
+      document.getElementById('btnExport').innerText = currentLang === 'ar' ? 'تصدير البيانات' : 'Export Data';
+
+      // Section Titles
+      document.getElementById('sec1Title').innerText = currentLang === 'ar' ? '1. مواصفات الألواح الشمسية (STC)' : '1. PV Panel Specification (STC)';
+      document.getElementById('sec2Title').innerText = currentLang === 'ar' ? '2. مواصفات الانفرتر (العاكس)' : '2. Inverter Specification';
+      document.getElementById('sec3Title').innerText = currentLang === 'ar' ? '3. درجات حرارة الفصول الأربعة (°C)' : '3. Seasonal Temperatures (°C)';
+      document.getElementById('sec4Title').innerText = currentLang === 'ar' ? '4. بنك خزن الطاقة (البطاريات)' : '4. Energy Storage (Battery Bank)';
+
+      // Labels
+      document.getElementById('lblPmp').innerText = currentLang === 'ar' ? 'قدرة اللوح P_mp (Wp)' : 'Power P_mp (Wp)';
+      document.getElementById('lblVoc').innerText = currentLang === 'ar' ? 'جهد الدائرة Voc (V)' : 'Voc Voltage (V)';
+      document.getElementById('lblIsc').innerText = currentLang === 'ar' ? 'تيار القصر Isc (A)' : 'Isc Current (A)';
+      document.getElementById('lblCoeff').innerText = currentLang === 'ar' ? 'معامل الحرارة (%/°C)' : 'Coeff Voc (%/°C)';
+      document.getElementById('lblSeries').innerText = currentLang === 'ar' ? 'الألواح على التوالي' : 'Panels Series';
+      document.getElementById('lblParallel').innerText = currentLang === 'ar' ? 'السلاسل على التوازي' : 'Parallel Strings';
+
+      document.getElementById('lblInvVmax').innerText = currentLang === 'ar' ? 'أقصى جهد مستمر (V)' : 'Max DC Voltage (V)';
+      document.getElementById('lblInvImax').innerText = currentLang === 'ar' ? 'أقصى تيار مدخل (A)' : 'Max Input I (A)';
+      document.getElementById('lblMpptMin').innerText = currentLang === 'ar' ? 'أدنى جهد MPPT (V)' : 'MPPT Min V (V)';
+      document.getElementById('lblMpptMax').innerText = currentLang === 'ar' ? 'أقصى جهد MPPT (V)' : 'MPPT Max V (V)';
+
+      document.getElementById('lblWinter').innerText = currentLang === 'ar' ? 'الشتاء (الأبرد)' : 'Winter (Coldest)';
+      document.getElementById('lblSpring').innerText = currentLang === 'ar' ? 'الربيع (معتدل)' : 'Spring (Moderate)';
+      document.getElementById('lblSummer').innerText = currentLang === 'ar' ? 'الصيف (الأشد حراً)' : 'Summer (Hottest)';
+      document.getElementById('lblAutumn').innerText = currentLang === 'ar' ? 'الخريف (معتدل)' : 'Autumn (Moderate)';
+
+      document.getElementById('lblBatType').innerText = currentLang === 'ar' ? 'نوع البطارية' : 'Battery Type';
+      document.getElementById('lblBusV').innerText = currentLang === 'ar' ? 'جهد النظام Bus (V)' : 'System Bus V (V)';
+      document.getElementById('lblUnitV').innerText = currentLang === 'ar' ? 'جهد البطارية (V)' : 'Single Bat Voltage (V)';
+      document.getElementById('lblUnitAh').innerText = currentLang === 'ar' ? 'سعة البطارية (Ah)' : 'Single Bat Capacity (Ah)';
+      document.getElementById('lblReqAh').innerText = currentLang === 'ar' ? 'السعة المطلوبة (Ah)' : 'Required Capacity (Ah)';
+
+      // Metric Titles
+      document.getElementById('mTitlePower').innerText = currentLang === 'ar' ? 'قدرة الألواح الكلية' : 'Total Array Power';
+      document.getElementById('mTitleIsc').innerText = currentLang === 'ar' ? 'التيار الإجمالي Isc' : 'Total Array Isc';
+      document.getElementById('mTitleGrossEnergy').innerText = currentLang === 'ar' ? 'طاقة البطاريات الكلية' : 'Gross Battery Energy';
+      document.getElementById('mTitleNetEnergy').innerText = currentLang === 'ar' ? 'الطاقة الفعالة الصافية' : 'Net Usable Storage';
+      document.getElementById('mTitleArea').innerText = currentLang === 'ar' ? 'المساحة المطلوبة التقديرية' : 'Est. Area Required';
+      document.getElementById('mTitleBatCount').innerText = currentLang === 'ar' ? 'عدد البطاريات المطلوب' : 'Total Batteries Needed';
+      document.getElementById('mTitleBatConfig').innerText = currentLang === 'ar' ? 'طريقة توصيل البطاريات' : 'Battery Wiring Setup';
+      document.getElementById('mTitleIscStatus').innerText = currentLang === 'ar' ? 'فحص تيار الانفرتر' : 'Inverter Current Check';
+
+      // Error Message Text Updates
+      inputsToValidate.forEach(id => {
+        const errEl = document.getElementById(`err_${id}`);
+        if (errEl) errEl.innerText = currentLang === 'ar' ? 'لا تتركها فارغة ولا تكتب صفراً' : 'Do not leave empty or zero';
+      });
+
+      calculate();
+    }
+
+    function saveToLocalStorage() {
+      const inputs = document.querySelectorAll('input, select');
+      const data = {};
+      inputs.forEach(input => data[input.id] = input.value);
+      localStorage.setItem('solar_project_data', JSON.stringify(data));
+      alert(currentLang === 'ar' ? 'تم حفظ بيانات المشروع بنجاح!' : 'Project configuration saved locally!');
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('solar_project_data');
+      if (saved) {
+        const data = JSON.parse(saved);
+        Object.keys(data).forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = data[id];
+        });
+      }
+    }
+
+    function exportJSON() {
+      const inputs = document.querySelectorAll('input, select');
+      const data = {};
+      inputs.forEach(input => data[input.id] = input.value);
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "solar_project_config.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    window.onload = function() {
+      initChart();
+      loadFromLocalStorage();
+      calculate();
+    };
+  </script>
+</body>
+</html>
